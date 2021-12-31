@@ -33,7 +33,7 @@ class CreateMPMDMetadata(Script):
         except Exception:
             Logger.logException("w", "Failed to create snapshot image")
 
-    def _convertImageToSJPG(self, snapshot, width, height, fragment_height=16):
+    def _convertImageToSJPG(self, snapshot, width, height, quality, fragment_height=16):
         """Convert QImage to split JPG (a LVGL format).
 
         Decoding normal JPG requres the whole uncompressed image fit in the
@@ -70,7 +70,7 @@ class CreateMPMDMetadata(Script):
                 thumbnail_buffer = QBuffer()
                 thumbnail_buffer.open(QBuffer.ReadWrite)
 
-                crop.save(thumbnail_buffer, format="JPG", quality=90)
+                crop.save(thumbnail_buffer, format="JPG", quality=quality)
 
                 sjpeg_data = sjpeg_data + thumbnail_buffer.data()
                 lenbuf.append(len(thumbnail_buffer.data()))
@@ -159,26 +159,33 @@ class CreateMPMDMetadata(Script):
             "key": "CreateMPMDMetadata",
             "metadata": {},
             "version": 2,
-            "settings": {}
+            "settings": {
+                "quality":
+                {
+                    "label": "Quality",
+                    "description": "Quality of the generated JPG image.",
+                    "type": "int",
+                    "default_value": 30,
+                    "minimum_value": 1,
+                    "maximum_value": 100
+                }
+            }
         }"""
 
     def execute(self, data):
-        material = (
-            Application.getInstance()
-            .getGlobalContainerStack()
-            .extruders["0"].material.getMetaData().get("material", "")
-        )
-        infill_density = (
-            Application.getInstance()
-            .getGlobalContainerStack()
-            .getProperty("infill_sparse_density", "value")
-        )
+        extruder = Application.getInstance().getGlobalContainerStack().extruders["0"]
+
+        material = extruder.material.getMetaData().get("material", "")
+        infill_density = extruder.getProperty("infill_sparse_density", "value")
+
+        quality = self.getSettingValueByKey("quality")
+
         width = THUMBNAIL_WIDTH
         height = THUMBNAIL_HEIGHT
 
         snapshot = self._createSnapshot(width, height)
         if snapshot:
-            sjpg_snapshot = self._convertImageToSJPG(snapshot, width, height)
+            sjpg_snapshot = self._convertImageToSJPG(snapshot, width, height, quality)
             encoded_snapshot = self._encodeSnapshot(sjpg_snapshot, width, height)
             snapshot_gcode = self._convertSnapshotToGcode(
                 encoded_snapshot, width, height
