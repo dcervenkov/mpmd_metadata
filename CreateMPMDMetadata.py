@@ -199,7 +199,7 @@ class CreateMPMDMetadata(Script):
                         line_index = lines.index(line)
                         amount_m = float(line.rsplit(" ", 1)[1].replace("m", ""))
                         amount_mm = amount_m * 1000
-                        lines[line_index] = f";FilamentUsed:{amount_mm}"
+                        lines[line_index] = f";FilamentUsed:{amount_mm:.2f}"
                         lines.insert(line_index, f";FilamentType:{material}")
                         lines.insert(line_index, f";InfillDensity:{infill_density}")
                     if line.startswith(";Generated with Cura"):
