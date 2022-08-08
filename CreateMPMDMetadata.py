@@ -11,8 +11,8 @@ import base64, math, os, sys, time
 from UM.Application import Application
 from UM.Logger import Logger
 from cura.Snapshot import Snapshot
-from PyQt5.QtCore import QByteArray, QIODevice, QBuffer
-from PyQt5.QtGui import QImage
+from PyQt6.QtCore import QByteArray, QIODevice, QBuffer
+from PyQt6.QtGui import QImage
 
 from ..Script import Script
 
