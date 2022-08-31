@@ -31,7 +31,7 @@ class CreateMPMDMetadata(Script):
         try:
             return Snapshot.snapshot(width, height)
         except Exception:
-            Logger.logException("w", "Failed to create snapshot image")
+            Logger.logException("e", "Failed to create snapshot image")
 
     def _convertImageToSJPG(self, snapshot, width, height, quality, fragment_height=16):
         """Convert QImage to split JPG (a LVGL format).
@@ -68,7 +68,7 @@ class CreateMPMDMetadata(Script):
                 row_remaining = row_remaining - fragment_height
 
                 thumbnail_buffer = QBuffer()
-                thumbnail_buffer.open(QBuffer.ReadWrite)
+                thumbnail_buffer.open(QBuffer.OpenModeFlag.ReadWrite)
 
                 crop.save(thumbnail_buffer, format="JPG", quality=quality)
 
@@ -105,7 +105,7 @@ class CreateMPMDMetadata(Script):
             sjpeg = header + sjpeg_data
             return sjpeg
         except Exception:
-            Logger.logException("w", "Failed to convert snapshot to SJPG")
+            Logger.logException("e", "Failed to convert snapshot to SJPG")
 
     def _encodeSnapshot(self, snapshot, width, height):
         """Encode image in base16 ASCII.
@@ -121,7 +121,7 @@ class CreateMPMDMetadata(Script):
             base16_message = base16_bytes.decode("ascii").lower()
             return base16_message
         except Exception:
-            Logger.logException("w", "Failed to encode snapshot image")
+            Logger.logException("e", "Failed to encode snapshot image")
 
     def _convertSnapshotToGcode(self, encoded_snapshot, width, height, chunk_size=80):
         """Convert ASCII encoded image to GCODE.
@@ -173,10 +173,15 @@ class CreateMPMDMetadata(Script):
         }"""
 
     def execute(self, data):
-        extruder = Application.getInstance().getGlobalContainerStack().extruders["0"]
+        Logger.log("d", "Retrieving print settings")
+        try:
+            assert len(Application.getInstance().getGlobalContainerStack().extruderList) == 1
+            extruder = Application.getInstance().getGlobalContainerStack().extruderList[0]
 
-        material = extruder.material.getMetaData().get("material", "")
-        infill_density = extruder.getProperty("infill_sparse_density", "value")
+            material = extruder.material.getMetaData().get("material", "")
+            infill_density = extruder.getProperty("infill_sparse_density", "value")
+        except:
+            Logger.logException("e", "Couldn't retrieve print settings")
 
         quality = self.getSettingValueByKey("quality")
 
